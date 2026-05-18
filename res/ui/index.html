@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>spider 手机脚本</title>
+    <link rel="stylesheet" href="layui/css/layui.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            height: 100%;
+            background-color: #f2f2f2;
+        }
+        /* 客户端标识输入页 */
+        .client-page {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .client-card {
+            width: 100%;
+            max-width: 400px;
+            background: #fff;
+            border-radius: 12px;
+            padding: 30px 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+        }
+        .client-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .client-close-btn {
+            color: #ff4d4f;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #fff1f0, #fff);
+            border: 1px solid #ffa39e;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+        }
+        .client-close-btn:hover {
+            background: linear-gradient(135deg, #ffccc7, #fff1f0);
+            transform: scale(1.05);
+        }
+        .client-close-btn::after {
+            content: "关闭";
+            font-size: 11px;
+            color: #ff4d4f;
+            font-weight: 500;
+        }
+        .client-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+        }
+        .client-input {
+            margin-bottom: 20px;
+        }
+        .client-input-wrapper {
+            position: relative;
+        }
+        .client-input-wrapper .layui-input {
+            padding-right: 50px;
+        }
+        .client-eye-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .client-btn {
+            width: 100%;
+            height: 45px;
+            font-size: 16px;
+            border-radius: 22px;
+        }
+        /* 主功能页 */
+        .main-page {
+            display: none;
+            height: 100%;
+        }
+        .main-page.show {
+            display: block;
+        }
+        /* 顶部栏 - fixed定位 */
+        .header {
+            background: #1E9FFF;
+            padding: 0 15px;
+            height: 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 10;
+        }
+        .header-left, .header-right {
+            width: auto;
+            min-width: 60px;
+        }
+        .header-title {
+            font-size: 17px;
+            font-weight: 500;
+            color: #fff;
+        }
+        .header-btn {
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .header-btn.close-btn {
+            font-size: 18px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.25);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.3);
+            transition: all 0.2s;
+        }
+        .header-btn.close-btn:hover {
+            background: rgba(255,255,255,0.4);
+            transform: scale(1.05);
+        }
+        .header-btn.close-btn::after {
+            content: "关闭";
+            font-size: 11px;
+            margin-left: 0;
+            font-weight: 500;
+        }
+        /* tab容器 - padding-top，overflow: scroll */
+        .tab-nav {
+            position: fixed;
+            top: 50px;
+            left: 0;
+            right: 0;
+            z-index: 99;
+            display: flex;
+            background: #fff;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        .tab-nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        .tab-nav-item.active {
+            color: #1E9FFF;
+            border-bottom-color: #1E9FFF;
+            font-weight: bold;
+        }
+        .tab-panel {
+            display: none;
+        }
+        .tab-panel.active {
+            display: block;
+        }
+        .tab-container {
+            padding-top: 90px;
+            height: 100%;
+            overflow: scroll;
+            -webkit-overflow-scrolling: touch;
+        }
+        /* 功能卡片 */
+        .module-card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .module-title {
+            font-size: 15px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .form-item {
+            margin-bottom: 15px;
+        }
+        .form-item:last-child {
+            margin-bottom: 0;
+        }
+        .form-label {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 5px;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        /* 任务设置卡片 */
+        .task-settings-card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .task-settings-title {
+            font-size: 15px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .task-form-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .task-form-label {
+            font-size: 14px;
+            color: #333;
+        }
+        .task-radio-group {
+            display: flex;
+            gap: 15px;
+        }
+        .task-radio-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .task-radio-circle {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #d2d2d2;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .task-radio-circle.checked {
+            border-color: #1E9FFF;
+        }
+        .task-radio-circle.checked::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            background: #1E9FFF;
+            border-radius: 50%;
+        }
+        .task-radio-text {
+            font-size: 14px;
+            color: #333;
+        }
+        .task-checkbox-row {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+        }
+        .task-checkbox-col {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        .task-checkbox-box {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #d2d2d2;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .task-checkbox-box.checked {
+            border-color: #1E9FFF;
+            background: #1E9FFF;
+        }
+        .task-checkbox-box.checked::after {
+            content: '✓';
+            color: #fff;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .task-checkbox-label {
+            font-size: 14px;
+            color: #333;
+        }
+        .task-input-num {
+            width: 36px;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #1E9FFF;
+            color: #1E9FFF;
+            font-size: 14px;
+            text-align: center;
+            outline: none;
+        }
+        .task-input-unit {
+            color: #666;
+            font-size: 12px;
+        }
+        .task-interval-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .task-interval-inputs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .task-interval-input {
+            width: 50px;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #1E9FFF;
+            color: #1E9FFF;
+            font-size: 14px;
+            text-align: center;
+            outline: none;
+        }
+        .task-interval-sep {
+            color: #666;
+            font-size: 14px;
+        }
+        .task-textarea-row {
+            margin-bottom: 15px;
+        }
+        .task-textarea-label {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .task-textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #e2e2e2;
+            color: #333;
+            font-size: 14px;
+            padding: 6px 0;
+            outline: none;
+        }
+        .task-textarea::placeholder {
+            color: #999;
+        }
+        .submit-btn {
+            width: calc(100% - 30px);
+            margin: 0 15px 30px 15px;
+            height: 45px;
+            font-size: 16px;
+            border-radius: 22px;
+        }
+        .hidden {
+            display: none !important;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.8;
+            }
+        }
+
+        /* 倒计时样式 */
+        .countdown-wrap {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .countdown-inner {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #fff0f0;
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: 1px solid #ffccc7;
+        }
+        .countdown-icon {
+            color: #ff4d4f;
+            font-size: 18px;
+        }
+        .countdown-text {
+            color: #666;
+            font-size: 13px;
+        }
+        .countdown-num {
+            font-size: 24px;
+            font-weight: bold;
+            color: #faad14;
+            min-width: 40px;
+            text-align: center;
+        }
+        .countdown-num.urgent {
+            color: #ff4d4f;
+            animation: pulse 0.5s infinite;
+        }
+    </style>
+</head>
+
+<body class="layui-bg-gray">
+    <!-- 客户端标识输入页 -->
+    <div id="clientPage" class="client-page">
+        <div class="client-card">
+            <div class="client-card-header">
+                <span class="client-close-btn" id="clientCloseBtn"><i class="layui-icon layui-icon-close"></i></span>
+                <div class="client-title">spider 手机脚本</div>
+                <span style="width: 24px;"></span>
+            </div>
+            <div class="client-input">
+                <div class="client-input-wrapper">
+                    <input type="password" id="super_key" class="layui-input" placeholder="请输入客户端标识">
+                    <span class="client-eye-btn" id="eyeBtn">显示</span>
+                </div>
+            </div>
+            <div class="client-input">
+                <input type="text" id="device_name" class="layui-input" placeholder="设备名称（不填则随机生成）">
+            </div>
+            <div style="background: #fffbe6; border: 1px solid #faad14; border-radius: 6px; padding: 12px 15px; margin-bottom: 20px;">
+                <p style="color: #d48806; font-size: 12px; margin: 0; line-height: 1.6; text-align: center;">
+                    <i class="layui-icon layui-icon-tips" style="margin-right: 5px;"></i>客户端标识请到客户端提取
+                    <br>所在位置 设置-&gt;全局设置 卡密附近【我的客户端标识】
+                </p>
+            </div>
+            <!-- 倒计时显示 -->
+            <div id="countdownWrap" class="countdown-wrap">
+                <div class="countdown-inner">
+                    <i class="layui-icon layui-icon-time countdown-icon"></i>
+                    <span class="countdown-text">请在</span>
+                    <span id="countdownNum" class="countdown-num">180</span>
+                    <span class="countdown-text">秒内完成操作</span>
+                </div>
+            </div>
+            <button class="layui-btn layui-btn-normal client-btn" id="enterBtn">进入</button>
+        </div>
+    </div>
+
+    <!-- 主功能页 -->
+    <div id="mainPage" class="main-page">
+        <!-- 顶部栏 -->
+        <div class="header">
+            <div class="header-left">
+                <span class="header-btn close-btn" id="closeBtn"><i class="layui-icon layui-icon-close"></i></span>
+            </div>
+            <div class="header-title">spider 手机脚本</div>
+            <div class="header-right">
+                <span class="header-btn" id="logoutBtn">返回</span>
+            </div>
+        </div>
+
+        <!-- tab导航栏 -->
+        <div class="tab-nav" id="tabNav"></div>
+
+        <!-- tab内容区 -->
+        <div class="tab-container">
+            <!-- 抖音用户留痕 -->
+            <div id="dyFootprintTab" data-permission="menu_dy_monitor_footprint" class="tab-panel">
+                <div class="task-settings-card">
+                    <div class="task-settings-title" style="display:flex;justify-content:space-between;align-items:center;">
+                        设置
+                        <span id="helpBtn" style="color:#1E9FFF;cursor:pointer;font-size:14px;">
+                            <i class="layui-icon layui-icon-about"></i> 说明
+                        </span>
+                    </div>
+
+                    <!-- 任务结束关闭App -->
+                    <div class="task-form-row">
+                        <div class="task-form-label">任务结束，关闭App：</div>
+                        <div class="task-radio-group">
+                            <div class="task-radio-item" data-value="true">
+                                <div class="task-radio-circle" id="closeAppYes"></div>
+                                <span class="task-radio-text">是</span>
+                            </div>
+                            <div class="task-radio-item" data-value="false">
+                                <div class="task-radio-circle checked" id="closeAppNo"></div>
+                                <span class="task-radio-text">否</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 多选配置 -->
+                    <div class="task-checkbox-row">
+                        <div class="task-checkbox-col">
+                            <div class="task-checkbox-box" id="checkboxFollow"></div>
+                            <span class="task-checkbox-label">关注：</span>
+                            <input type="number" class="task-input-num" id="followCount" value="100">
+                            <span class="task-input-unit">次</span>
+                            <input type="number" class="task-input-num" id="followRate" value="100">
+                            <span class="task-input-unit">%</span>
+                        </div>
+                        <div class="task-checkbox-col">
+                            <div class="task-checkbox-box" id="checkboxPrivateMsg"></div>
+                            <span class="task-checkbox-label">私信：</span>
+                            <input type="number" class="task-input-num" id="privateMsgCount" value="80">
+                            <span class="task-input-unit">次</span>
+                            <input type="number" class="task-input-num" id="privateMsgRate" value="10">
+                            <span class="task-input-unit">%</span>
+                        </div>
+                        <div class="task-checkbox-col">
+                            <div class="task-checkbox-box" id="checkboxHomeLike"></div>
+                            <span class="task-checkbox-label">主页赞：</span>
+                            <input type="number" class="task-input-num" id="homeLikeCount" value="50">
+                            <span class="task-input-unit">次</span>
+                            <input type="number" class="task-input-num" id="homeLikeRate" value="20">
+                            <span class="task-input-unit">%</span>
+                        </div>
+                        <div class="task-checkbox-col">
+                            <div class="task-checkbox-box" id="checkboxHomeCollect"></div>
+                            <span class="task-checkbox-label">主页藏：</span>
+                            <input type="number" class="task-input-num" id="homeCollectCount" value="5">
+                            <span class="task-input-unit">次</span>
+                            <input type="number" class="task-input-num" id="homeCollectRate" value="10">
+                            <span class="task-input-unit">%</span>
+                        </div>
+                        <div class="task-checkbox-col">
+                            <div class="task-checkbox-box" id="checkboxHomeComment"></div>
+                            <span class="task-checkbox-label">主页评：</span>
+                            <input type="number" class="task-input-num" id="homeCommentCount" value="30">
+                            <span class="task-input-unit">次</span>
+                            <input type="number" class="task-input-num" id="homeCommentRate" value="30">
+                            <span class="task-input-unit">%</span>
+                        </div>
+                    </div>
+
+                    <!-- 每轮间隔时间 -->
+                    <div class="task-interval-row">
+                        <div class="task-form-label">每轮间隔时间：</div>
+                        <div class="task-interval-inputs">
+                            <input type="number" class="task-interval-input" id="intervalMin" value="1">
+                            <span class="task-interval-sep">-</span>
+                            <input type="number" class="task-interval-input" id="intervalMax" value="10">
+                            <span class="task-input-unit">秒</span>
+                        </div>
+                    </div>
+
+                    <!-- 私信话术 -->
+                    <div class="task-textarea-row">
+                        <label class="task-textarea-label">私信话术：</label>
+                        <input type="text" class="task-textarea" id="privateMsgScript" placeholder="输入话术，多个/分割">
+                    </div>
+
+                    <!-- 评论区用户主页视频评论话术 -->
+                    <div class="task-textarea-row">
+                        <label class="task-textarea-label">评论区用户主页视频评论话术：</label>
+                        <input type="text" class="task-textarea" id="homeVideoCommentScript" placeholder="输入话术，多个/分割">
+                    </div>
+                </div>
+
+                <button type="button" class="layui-btn layui-btn-normal submit-btn" id="startBtn">开始</button>
+            </div>
+
+            <!-- 抖音帖子留痕 -->
+            <div id="dyPostFootprintTab" data-permission="menu_dy_post_footprint" class="tab-panel">
+                <div class="task-settings-card">
+                    <div class="task-settings-title" style="display:flex;justify-content:space-between;align-items:center;">
+                        设置
+                        <span id="postHelpBtn" style="color:#1E9FFF;cursor:pointer;font-size:14px;">
+                            <i class="layui-icon layui-icon-about"></i> 说明
+                        </span>
+                    </div>
+
+                    <!-- 任务结束关闭App -->
+                    <div class="task-form-row">
+                        <div class="task-form-label">任务结束，关闭App：</div>
+                        <div class="task-radio-group">
+                            <div class="task-radio-item" data-value="true">
+                                <div class="task-radio-circle" id="postCloseAppYes"></div>
+                                <span class="task-radio-text">是</span>
+                            </div>
+                            <div class="task-radio-item" data-value="false">
+                                <div class="task-radio-circle checked" id="postCloseAppNo"></div>
+                                <span class="task-radio-text">否</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 多选配置 -->
+                    <div class="task-checkbox-row">
+                        <div class="task-checkbox-col">
+                            <div class="task-checkbox-box" id="postCheckboxTextComment"></div>
+                            <span class="task-checkbox-label">文字评论：</span>
+                            <input type="number" class="task-input-num" id="postTextCommentCount" value="100">
+                            <span class="task-input-unit">次</span>
+                            <input type="number" class="task-input-num" id="postTextCommentRate" value="100">
+                            <span class="task-input-unit">%</span>
+                        </div>
+                        <div class="task-checkbox-col">
+                            <div class="task-checkbox-box" id="postCheckboxEmojiComment"></div>
+                            <span class="task-checkbox-label">表情图评论(随机选)：</span>
+                            <input type="number" class="task-input-num" id="postEmojiCommentCount" value="100">
+                            <span class="task-input-unit">次</span>
+                            <input type="number" class="task-input-num" id="postEmojiCommentRate" value="100">
+                            <span class="task-input-unit">%</span>
+                        </div>
+                    </div>
+
+                    <!-- 每轮间隔时间 -->
+                    <div class="task-interval-row">
+                        <div class="task-form-label">每轮间隔时间：</div>
+                        <div class="task-interval-inputs">
+                            <input type="number" class="task-interval-input" id="postIntervalMin" value="120">
+                            <span class="task-interval-sep">-</span>
+                            <input type="number" class="task-interval-input" id="postIntervalMax" value="199">
+                            <span class="task-input-unit">秒</span>
+                        </div>
+                    </div>
+
+                    <!-- 评论话术 -->
+                    <div class="task-textarea-row">
+                        <label class="task-textarea-label">评论话术：</label>
+                        <input type="text" class="task-textarea" id="postCommentScript" placeholder="输入话术，多个/分割">
+                    </div>
+                </div>
+
+                <button type="button" class="layui-btn layui-btn-normal submit-btn" id="postStartBtn">开始</button>
+            </div>
+
+
+            <!-- 全自动云控 -->
+            <div id="fullAutoCloudTab" data-permission="menu_full_auto_cloud" class="tab-panel" style="padding:15px;">
+                <button type="button" class="layui-btn layui-btn-normal layui-btn-fluid" id="cloudStartBtn" style="height:45px;font-size:16px;">启动云控</button>
+            </div>
+
+            <!-- 默认首页 -->
+            <div id="defaultTab" data-permission="default" class="tab-panel">
+                <div class="module-card">
+                    <div class="module-title">提示</div>
+                    <p style="color:#666;text-align:center;padding:20px;">暂无可用功能，请联系作者开通...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="layui/layui.js"></script>
+    <script src="js/jquery.min.js"></script>
+    <script>
+        let ascript_obj = airscript
+        let layer, element, form
+        let countdownTimer = null  // 客户端标识页面倒计时
+        let countdownValue = 180;  // 3分钟
+
+        // 更新倒计时显示
+        function updateCountdownDisplay() {
+            let $num = $('#countdownNum');
+            $num.text(countdownValue);
+            if (countdownValue <= 10) {
+                $num.addClass('urgent');
+            } else {
+                $num.removeClass('urgent');
+            }
+        }
+
+        // 启动倒计时
+        function startClientPageTimeout() {
+            stopClientPageTimeout();
+            countdownValue = 180;
+            updateCountdownDisplay();
+
+            countdownTimer = setInterval(function() {
+                countdownValue--;
+                updateCountdownDisplay();
+                if (countdownValue <= 0) {
+                    stopClientPageTimeout();
+                    ascript_obj.call("close", "");
+                    ascript_obj.close();
+                }
+            }, 1000);
+        }
+
+        // 停止倒计时
+        function stopClientPageTimeout() {
+            if (countdownTimer) {
+                clearInterval(countdownTimer);
+                countdownTimer = null;
+            }
+        }
+
+        layui.use(['element', 'layer', 'form'], function(){
+            element = layui.element;
+            layer = layui.layer;
+            form = layui.form;
+
+            function data_init(){
+               var super_key = ascript_obj.get("super_key");
+               if(super_key && super_key.length > 0){
+                   $('#super_key').val(super_key)
+               }
+               var device_name = ascript_obj.get("device_name");
+               if(device_name && device_name.length > 0){
+                   $('#device_name').val(device_name)
+               }
+
+               // 加载抖音留痕表单状态
+               var formDataStr = ascript_obj.get("dyFootprintForm");
+               if(formDataStr && formDataStr.length > 0){
+                   try{
+                       var formData = JSON.parse(formDataStr);
+                       if(formData.closeApp !== undefined){
+                           if(formData.closeApp){
+                               $('#closeAppYes').addClass('checked');
+                               $('#closeAppNo').removeClass('checked');
+                           }else{
+                               $('#closeAppNo').addClass('checked');
+                               $('#closeAppYes').removeClass('checked');
+                           }
+                       }
+                       // 复选框状态
+                       if(formData.follow !== undefined && formData.follow){
+                           $('#checkboxFollow').addClass('checked');
+                       }
+                       if(formData.privateMsg !== undefined && formData.privateMsg){
+                           $('#checkboxPrivateMsg').addClass('checked');
+                       }
+                       if(formData.homeLike !== undefined && formData.homeLike){
+                           $('#checkboxHomeLike').addClass('checked');
+                       }
+                       if(formData.homeCollect !== undefined && formData.homeCollect){
+                           $('#checkboxHomeCollect').addClass('checked');
+                       }
+                       if(formData.homeComment !== undefined && formData.homeComment){
+                           $('#checkboxHomeComment').addClass('checked');
+                       }
+                       // 数值输入
+                       if(formData.followCount !== undefined){
+                           $('#followCount').val(formData.followCount);
+                       }
+                       if(formData.followRate !== undefined){
+                           $('#followRate').val(formData.followRate);
+                       }
+                       if(formData.privateMsgCount !== undefined){
+                           $('#privateMsgCount').val(formData.privateMsgCount);
+                       }
+                       if(formData.privateMsgRate !== undefined){
+                           $('#privateMsgRate').val(formData.privateMsgRate);
+                       }
+                       if(formData.homeLikeCount !== undefined){
+                           $('#homeLikeCount').val(formData.homeLikeCount);
+                       }
+                       if(formData.homeLikeRate !== undefined){
+                           $('#homeLikeRate').val(formData.homeLikeRate);
+                       }
+                       if(formData.homeCollectCount !== undefined){
+                           $('#homeCollectCount').val(formData.homeCollectCount);
+                       }
+                       if(formData.homeCollectRate !== undefined){
+                           $('#homeCollectRate').val(formData.homeCollectRate);
+                       }
+                       if(formData.homeCommentCount !== undefined){
+                           $('#homeCommentCount').val(formData.homeCommentCount);
+                       }
+                       if(formData.homeCommentRate !== undefined){
+                           $('#homeCommentRate').val(formData.homeCommentRate);
+                       }
+                       // 间隔时间
+                       if(formData.intervalMin !== undefined){
+                           $('#intervalMin').val(formData.intervalMin);
+                       }
+                       if(formData.intervalMax !== undefined){
+                           $('#intervalMax').val(formData.intervalMax);
+                       }
+                       // 话术
+                       if(formData.privateMsgScript !== undefined){
+                           $('#privateMsgScript').val(formData.privateMsgScript);
+                       }
+                       if(formData.homeVideoCommentScript !== undefined){
+                           $('#homeVideoCommentScript').val(formData.homeVideoCommentScript);
+                       }
+                   }catch(e){
+                       console.error('加载表单状态失败', e);
+                   }
+               }
+
+               // 加载帖子留痕表单状态
+               var postFormDataStr = ascript_obj.get("dyPostFootprintForm");
+               if(postFormDataStr && postFormDataStr.length > 0){
+                   try{
+                       var postFormData = JSON.parse(postFormDataStr);
+                       if(postFormData.closeApp !== undefined){
+                           if(postFormData.closeApp){
+                               $('#postCloseAppYes').addClass('checked');
+                               $('#postCloseAppNo').removeClass('checked');
+                           }else{
+                               $('#postCloseAppNo').addClass('checked');
+                               $('#postCloseAppYes').removeClass('checked');
+                           }
+                       }
+                       if(postFormData.textComment !== undefined && postFormData.textComment){
+                           $('#postCheckboxTextComment').addClass('checked');
+                       }
+                       if(postFormData.emojiComment !== undefined && postFormData.emojiComment){
+                           $('#postCheckboxEmojiComment').addClass('checked');
+                       }
+                       if(postFormData.textCommentCount !== undefined){
+                           $('#postTextCommentCount').val(postFormData.textCommentCount);
+                       }
+                       if(postFormData.textCommentRate !== undefined){
+                           $('#postTextCommentRate').val(postFormData.textCommentRate);
+                       }
+                       if(postFormData.emojiCommentCount !== undefined){
+                           $('#postEmojiCommentCount').val(postFormData.emojiCommentCount);
+                       }
+                       if(postFormData.emojiCommentRate !== undefined){
+                           $('#postEmojiCommentRate').val(postFormData.emojiCommentRate);
+                       }
+                       if(postFormData.intervalMin !== undefined){
+                           $('#postIntervalMin').val(postFormData.intervalMin);
+                       }
+                       if(postFormData.intervalMax !== undefined){
+                           $('#postIntervalMax').val(postFormData.intervalMax);
+                       }
+                       if(postFormData.commentScript !== undefined){
+                           $('#postCommentScript').val(postFormData.commentScript);
+                       }
+                   }catch(e){
+                       console.error('加载帖子留痕表单状态失败', e);
+                   }
+               }
+            }
+            data_init()
+
+            // 页面加载时启动超时计时器
+            startClientPageTimeout();
+
+            // 保存表单状态
+            function saveFormState(){
+                var formData = {
+                    closeApp: $('#closeAppYes').hasClass('checked'),
+                    follow: $('#checkboxFollow').hasClass('checked'),
+                    followCount: $('#followCount').val(),
+                    followRate: $('#followRate').val(),
+                    privateMsg: $('#checkboxPrivateMsg').hasClass('checked'),
+                    privateMsgCount: $('#privateMsgCount').val(),
+                    privateMsgRate: $('#privateMsgRate').val(),
+                    homeLike: $('#checkboxHomeLike').hasClass('checked'),
+                    homeLikeCount: $('#homeLikeCount').val(),
+                    homeLikeRate: $('#homeLikeRate').val(),
+                    homeCollect: $('#checkboxHomeCollect').hasClass('checked'),
+                    homeCollectCount: $('#homeCollectCount').val(),
+                    homeCollectRate: $('#homeCollectRate').val(),
+                    homeComment: $('#checkboxHomeComment').hasClass('checked'),
+                    homeCommentCount: $('#homeCommentCount').val(),
+                    homeCommentRate: $('#homeCommentRate').val(),
+                    intervalMin: $('#intervalMin').val(),
+                    intervalMax: $('#intervalMax').val(),
+                    privateMsgScript: $('#privateMsgScript').val(),
+                    homeVideoCommentScript: $('#homeVideoCommentScript').val()
+                };
+                ascript_obj.save("dyFootprintForm", JSON.stringify(formData));
+            }
+
+            // 单选按钮点击 - 任务结束关闭App
+            $('#closeAppYes, #closeAppNo').on('click', function(){
+                if($(this).attr('id') === 'closeAppYes'){
+                    $('#closeAppYes').addClass('checked');
+                    $('#closeAppNo').removeClass('checked');
+                }else{
+                    $('#closeAppNo').addClass('checked');
+                    $('#closeAppYes').removeClass('checked');
+                }
+                saveFormState();
+            });
+
+            // 单选按钮点击 - 帖子留痕任务结束关闭App
+            $('#postCloseAppYes, #postCloseAppNo').on('click', function(){
+                if($(this).attr('id') === 'postCloseAppYes'){
+                    $('#postCloseAppYes').addClass('checked');
+                    $('#postCloseAppNo').removeClass('checked');
+                }else{
+                    $('#postCloseAppNo').addClass('checked');
+                    $('#postCloseAppYes').removeClass('checked');
+                }
+                savePostFormState();
+            });
+
+            // 复选框点击
+            $('.task-checkbox-box').on('click', function(){
+                $(this).toggleClass('checked');
+                saveFormState();
+                savePostFormState();
+            });
+
+            // 所有输入框监听
+            $('.task-input-num, .task-interval-input, .task-textarea').on('input', function(){
+                saveFormState();
+                savePostFormState();
+            });
+
+            // 保存帖子留痕表单状态
+            function savePostFormState(){
+                var formData = {
+                    closeApp: $('#postCloseAppYes').hasClass('checked'),
+                    textComment: $('#postCheckboxTextComment').hasClass('checked'),
+                    textCommentCount: $('#postTextCommentCount').val(),
+                    textCommentRate: $('#postTextCommentRate').val(),
+                    emojiComment: $('#postCheckboxEmojiComment').hasClass('checked'),
+                    emojiCommentCount: $('#postEmojiCommentCount').val(),
+                    emojiCommentRate: $('#postEmojiCommentRate').val(),
+                    intervalMin: $('#postIntervalMin').val(),
+                    intervalMax: $('#postIntervalMax').val(),
+                    commentScript: $('#postCommentScript').val()
+                };
+                ascript_obj.save("dyPostFootprintForm", JSON.stringify(formData));
+            }
+
+            // 监听输入框活动，重置超时
+            $('#super_key').on('input keypress focus', function() {
+                startClientPageTimeout();
+            });
+
+            // 进入按钮点击
+            $('#enterBtn').on('click', function(){
+                var super_key = $('#super_key').val().trim();
+                if(!super_key){
+                    layer.msg('请输入客户端标识');
+                    return;
+                }
+                var device_name = $('#device_name').val().trim();
+                if(!device_name){
+                    device_name = '设备' + Math.random().toString(36).slice(2, 7).toUpperCase();
+                }
+                ascript_obj.save("super_key", super_key);
+                ascript_obj.save("device_name", device_name);
+                layer.load(2, {shade: [0.3, '#000']});
+                ascript_obj.call("check_key", JSON.stringify({key: super_key, device_name: device_name}))
+            });
+
+            // 退出按钮
+            $('#logoutBtn').on('click', function(){
+                $('#mainPage').removeClass('show');
+                $('#clientPage').show();
+                var super_key = ascript_obj.get("super_key");
+                if(super_key && super_key.length > 0){
+                    $('#super_key').val(super_key)
+                }
+                var device_name = ascript_obj.get("device_name");
+                if(device_name && device_name.length > 0){
+                    $('#device_name').val(device_name)
+                }
+                startClientPageTimeout();
+            });
+
+            // 关闭按钮（主页面）
+            $('#closeBtn').on('click', function(){
+                ascript_obj.call("close", "")
+                ascript_obj.close();
+            });
+
+            // 关闭按钮（客户端标识页）
+            $('#clientCloseBtn').on('click', function(){
+                ascript_obj.call("close", "")
+                ascript_obj.close();
+            });
+
+            // 说明按钮
+            $('#helpBtn').on('click', function(){
+                layer.open({
+                    title: '功能说明',
+                    content: '<div style="padding:10px;line-height:2;">' +
+                        '<p><strong>关注：</strong>关注用户</p>' +
+                        '<p><strong>私信：</strong>私信用户</p>' +
+                        '<p><strong>主页赞：</strong>主页给第一个视频点赞</p>' +
+                        '<p><strong>主页藏：</strong>主页给第一个视频收藏</p>' +
+                        '<p><strong>主页评：</strong>主页给第一个视频评论</p>' +
+                        '<hr style="margin:10px 0;border:none;border-top:1px solid #eee;">' +
+                        '<p><strong>次数和百分比含义：</strong></p>' +
+                        '<p style="padding-left:1em;">例如 关注 100次 20%</p>' +
+                        '<p style="padding-left:2em;">指的是20%概率进行关注，关注100次后不再关注</p>' +
+                        '<p style="color:#ff6b6b;margin-top:10px;"><strong>防止风控</strong></p>' +
+                        '</div>',
+                    area: ['320px', '420px'],
+                    btn: ['知道了']
+                });
+            });
+
+            // 帖子留痕说明按钮
+            $('#postHelpBtn').on('click', function(){
+                layer.open({
+                    title: '功能说明',
+                    content: '<div style="padding:10px;line-height:2;">' +
+                        '<p><strong>文字评论：</strong>对帖子发送文字评论</p>' +
+                        '<p><strong>表情图评论：</strong>对帖子发送表情图评论</p>' +
+                        '<hr style="margin:10px 0;border:none;border-top:1px solid #eee;">' +
+                        '<p><strong>次数和百分比含义：</strong></p>' +
+                        '<p style="padding-left:1em;">例如 文字评论 100次 80%</p>' +
+                        '<p style="padding-left:2em;">指的是80%概率进行文字评论，评论100次后不再评论</p>' +
+                        '<p style="color:#ff6b6b;margin-top:10px;"><strong>防止风控</strong></p>' +
+                        '</div>',
+                    area: ['320px', '380px'],
+                    btn: ['知道了']
+                });
+            });
+
+            // 眼睛按钮 - 切换密码显示/隐藏
+            $('#eyeBtn').on('click', function(){
+                var $input = $('#super_key');
+                var $btn = $(this);
+                if($input.attr('type') === 'password'){
+                    $input.attr('type', 'text');
+                    $btn.text('隐藏');
+                }else{
+                    $input.attr('type', 'password');
+                    $btn.text('显示');
+                }
+            });
+
+            // 回车进入
+            $('#super_key').on('keypress', function(e){
+                if(e.keyCode === 13){
+                    $('#enterBtn').click();
+                }
+            });
+
+            // 开始按钮
+            $('#startBtn').on('click', function(){
+                var formData = {
+                    closeApp: $('#closeAppYes').hasClass('checked'),
+                    follow: $('#checkboxFollow').hasClass('checked'),
+                    followCount: $('#followCount').val(),
+                    followRate: $('#followRate').val(),
+                    privateMsg: $('#checkboxPrivateMsg').hasClass('checked'),
+                    privateMsgCount: $('#privateMsgCount').val(),
+                    privateMsgRate: $('#privateMsgRate').val(),
+                    homeLike: $('#checkboxHomeLike').hasClass('checked'),
+                    homeLikeCount: $('#homeLikeCount').val(),
+                    homeLikeRate: $('#homeLikeRate').val(),
+                    homeCollect: $('#checkboxHomeCollect').hasClass('checked'),
+                    homeCollectCount: $('#homeCollectCount').val(),
+                    homeCollectRate: $('#homeCollectRate').val(),
+                    homeComment: $('#checkboxHomeComment').hasClass('checked'),
+                    homeCommentCount: $('#homeCommentCount').val(),
+                    homeCommentRate: $('#homeCommentRate').val(),
+                    intervalMin: $('#intervalMin').val(),
+                    intervalMax: $('#intervalMax').val(),
+                    privateMsgScript: $('#privateMsgScript').val(),
+                    homeVideoCommentScript: $('#homeVideoCommentScript').val()
+                };
+
+                // 构建确认信息
+                var confirmMsg = '确认开始任务？<br><br>';
+                var actions = [];
+                if(formData.follow) actions.push('关注');
+                if(formData.privateMsg) actions.push('私信');
+                if(formData.homeLike) actions.push('主页赞');
+                if(formData.homeCollect) actions.push('主页藏');
+                if(formData.homeComment) actions.push('主页评');
+                if(actions.length === 0){
+                    layer.msg('请至少选择一个功能！');
+                    return;
+                }
+                confirmMsg += '已选功能：' + actions.join('、') + '<br>';
+                confirmMsg += '每轮间隔：' + (formData.intervalMin || 120) + '-' + (formData.intervalMax || 199) + '秒';
+
+                layer.confirm(confirmMsg, {
+                    title: '确认操作',
+                    btn: ['开始', '取消']
+                }, function(index){
+                    layer.close(index);
+                    ascript_obj.call("dy_start_footprint", JSON.stringify(formData));
+                });
+            });
+
+            // 帖子留痕开始按钮
+            $('#postStartBtn').on('click', function(){
+                var formData = {
+                    closeApp: $('#postCloseAppYes').hasClass('checked'),
+                    textComment: $('#postCheckboxTextComment').hasClass('checked'),
+                    textCommentCount: $('#postTextCommentCount').val(),
+                    textCommentRate: $('#postTextCommentRate').val(),
+                    emojiComment: $('#postCheckboxEmojiComment').hasClass('checked'),
+                    emojiCommentCount: $('#postEmojiCommentCount').val(),
+                    emojiCommentRate: $('#postEmojiCommentRate').val(),
+                    intervalMin: $('#postIntervalMin').val(),
+                    intervalMax: $('#postIntervalMax').val(),
+                    commentScript: $('#postCommentScript').val()
+                };
+
+                var confirmMsg = '确认开始任务？<br><br>';
+                var actions = [];
+                if(formData.textComment) actions.push('文字评论');
+                if(formData.emojiComment) actions.push('表情图评论');
+                if(actions.length === 0){
+                    layer.msg('请至少选择一个功能！');
+                    return;
+                }
+                confirmMsg += '已选功能：' + actions.join('、') + '<br>';
+                confirmMsg += '每轮间隔：' + (formData.intervalMin || 120) + '-' + (formData.intervalMax || 199) + '秒';
+
+                layer.confirm(confirmMsg, {
+                    title: '确认操作',
+                    btn: ['开始', '取消']
+                }, function(index){
+                    layer.close(index);
+                    ascript_obj.call("dy_start_post_footprint", JSON.stringify(formData));
+                });
+            });
+
+            // 云控启动按钮
+            $('#cloudStartBtn').on('click', function(){
+                layer.confirm('确认启动全自动云控？', {
+                    title: '确认操作',
+                    btn: ['启动', '取消']
+                }, function(index){
+                    layer.close(index);
+                    // TODO: 实现全自动云控逻辑
+                    ascript_obj.call("cloud_start", JSON.stringify({}));
+                });
+            });
+        });
+
+        // Python调用此函数渲染权限页面
+        window.renderPermissions = function(rolesStr){
+            layer.closeAll();
+
+            // 验证通过，停止倒计时
+            stopClientPageTimeout();
+
+            var roles;
+            try {
+                roles = typeof rolesStr === 'string' ? JSON.parse(rolesStr) : rolesStr;
+            } catch(e) {
+                roles = {};
+            }
+
+            var hasPermission = false;
+
+            // tab配置：权限key -> 显示名称
+            var tabConfig = [
+                { id: 'dyFootprintTab',     permission: 'menu_dy_monitor_footprint', label: '抖音用户留痕' },
+                { id: 'dyPostFootprintTab', permission: 'menu_dy_post_footprint',    label: '抖音帖子留痕' },
+                { id: 'fullAutoCloudTab',   permission: 'menu_full_auto_cloud',      label: '全自动云控' },
+            ];
+
+            var availableTabs = tabConfig.filter(function(t) {
+                return roles && roles[t.permission];
+            });
+
+            // 构建tab导航栏
+            var $nav = $('#tabNav').empty();
+            if (availableTabs.length > 1) {
+                availableTabs.forEach(function(t, i) {
+                    $nav.append(
+                        $('<div class="tab-nav-item' + (i === 0 ? ' active' : '') + '">')
+                            .text(t.label)
+                            .on('click', function() {
+                                $('.tab-nav-item').removeClass('active');
+                                $(this).addClass('active');
+                                $('.tab-panel').removeClass('active');
+                                $('#' + t.id).addClass('active');
+                            })
+                    );
+                });
+                $nav.show();
+                $('.tab-container').css('padding-top', '90px');
+            } else {
+                $nav.hide();
+                $('.tab-container').css('padding-top', '50px');
+            }
+
+            // 显示有权限的面板，激活第一个
+            $('.tab-panel').removeClass('active');
+            if (availableTabs.length > 0) {
+                hasPermission = true;
+                $('#' + availableTabs[0].id).addClass('active');
+            }
+
+            // 如果没有任何权限，显示默认tab
+            if (!hasPermission) {
+                $('#defaultTab').addClass('active');
+            }
+
+            $('#clientPage').hide();
+            $('#mainPage').addClass('show');
+            layui.form.render();
+        }
+
+        window.showError = function(msg){
+            layer.closeAll();
+            layer.msg(msg || '验证失败');
+        }
+
+        // load
+        window.showLoading = function(msg){
+            layer.closeAll();
+            layer.msg(msg || '加载中...', {
+                icon: 16,
+                shade: 0.01,
+                time: 0 // 设置为0表示不自动关闭
+            });
+        }
+    </script>
+</body>
+
+</html>

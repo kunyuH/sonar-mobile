@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Alert</title>
+    <style>
+        body { margin: 0; padding: 0; background: transparent; }
+    </style>
+</head>
+<body>
+    <!-- 空页面，仅用于执行 JS 弹窗 -->
+    <script>
+        // 页面加载完成后，设置一个定时器保持页面活跃
+        window.onload = function() {
+            if (typeof ascript !== 'undefined') {
+                ascript.call('alert_ready', 'Alert window ready');
+            }
+            // 保持页面活跃，防止被回收
+            setInterval(function() {
+                console.log('alert window heartbeat');
+            }, 30000);
+        };
+    </script>
+</body>
+</html>
