@@ -228,7 +228,8 @@ def run_sel_s(fun, re_time=1):
             if a:
                 return a
         except Exception as e:
-            print(f'run_sel_s 异常: {e}')
+            pass
+            # print(f'run_sel_s 异常: {e}')
         num += 1
         time.sleep(0.1)
 

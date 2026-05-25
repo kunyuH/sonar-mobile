@@ -29,6 +29,7 @@ def get_note_info(note_info=None,is_shop=False,is_get_url=True):
     t1 = time.time()
     # 确认详情页已经加载
     run_sel_s(lambda :Selector(2).desc("点赞.*").type("Button").find(),4)
+    return note_info
 
     is_video = False
     note_info['类型'] = 'normal'

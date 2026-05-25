@@ -146,39 +146,37 @@ def on_message_note(option):
             note_id = note_info.get('笔记ID')
             t2 = time.time()
             print(f"a耗时：{t2 - t1}")
-            # print(note_id)
-            # print(all_note)
-            # print(note_id not in all_note)
+
             if note_id is not None and note_id not in all_note:
                 all_note.append(note_id)
                 gather_note.append({
                     '来源': note_info.get('来源'),
                     '标题': note_info.get('标题'),
-                    '内容': note_info.get('内容'),
-                    '用户名称': note_info.get('用户名称'),
-                    '发布时间': note_info.get('发布时间'),
-                    '点赞数': note_info.get('点赞数'),
-                    '收藏数': note_info.get('收藏数'),
-                    '评论数': note_info.get('评论数'),
-                    '分享数': note_info.get('分享数'),
-                    '类型': note_info.get('类型'),
+                    # '内容': note_info.get('内容'),
+                    # '用户名称': note_info.get('用户名称'),
+                    # '发布时间': note_info.get('发布时间'),
+                    # '点赞数': note_info.get('点赞数'),
+                    # '收藏数': note_info.get('收藏数'),
+                    # '评论数': note_info.get('评论数'),
+                    # '分享数': note_info.get('分享数'),
+                    # '类型': note_info.get('类型'),
 
-                    '笔记ID': note_info.get('笔记ID'),
-                    '笔记链接': note_info.get('笔记链接'),
-                    '笔记分享链接': note_info.get('笔记分享链接'),
-
-                    '用户小红书号': note_info.get('用户小红书号'),
-                    '用户IP属地': note_info.get('用户IP属地'),
-                    '用户简介': note_info.get('用户简介'),
-                    '用户性别': note_info.get('用户性别'),
-                    '用户关注': note_info.get('用户关注'),
-                    '用户粉丝': note_info.get('用户粉丝'),
-                    '用户获赞与收藏': note_info.get('用户获赞与收藏'),
-                    '是否有店铺': note_info.get('是否有店铺'),
-                    '店铺名称': note_info.get('店铺名称'),
-                    '店铺星级': note_info.get('店铺星级'),
-                    '店铺已售': note_info.get('店铺已售'),
-                    '店铺粉丝': note_info.get('店铺粉丝'),
+                    # '笔记ID': note_info.get('笔记ID'),
+                    # '笔记链接': note_info.get('笔记链接'),
+                    # '笔记分享链接': note_info.get('笔记分享链接'),
+                    #
+                    # '用户小红书号': note_info.get('用户小红书号'),
+                    # '用户IP属地': note_info.get('用户IP属地'),
+                    # '用户简介': note_info.get('用户简介'),
+                    # '用户性别': note_info.get('用户性别'),
+                    # '用户关注': note_info.get('用户关注'),
+                    # '用户粉丝': note_info.get('用户粉丝'),
+                    # '用户获赞与收藏': note_info.get('用户获赞与收藏'),
+                    # '是否有店铺': note_info.get('是否有店铺'),
+                    # '店铺名称': note_info.get('店铺名称'),
+                    # '店铺星级': note_info.get('店铺星级'),
+                    # '店铺已售': note_info.get('店铺已售'),
+                    # '店铺粉丝': note_info.get('店铺粉丝'),
                 })
                 # 采集了多少条
                 gr_total = (page-1)*page_size + len(gather_note)
@@ -202,7 +200,6 @@ def on_message_note(option):
             if note_info.get('类型') == 'video':
                 Selector(2).desc("返回").type("ImageView").click().find()
             else:
-            #     Selector(2).type("ImageView").click().find()
                 action.Key.back()
             time.sleep(0.2)
             t4 = time.time()
