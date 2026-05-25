@@ -23,6 +23,7 @@ def on_message_note(option):
     """
     json_ = {
             "keyword": keyword,
+            "max_num": 100,
             "is_shop": is_shop,
             "page": gct.get('page'),
             "page_size": 10,
@@ -62,7 +63,7 @@ def on_message_note(option):
         out_info(f"正在搜索关键词： {keyword}")
 
         # 等待搜索结果加载完成
-        run_sel(lambda :Selector(2).type("ActionBar\$Tab").find(),4,0.1)
+        run_sel(lambda :Selector(2).type('ActionBar\$Tab').find(),4,0.1)
 
         # 需添加筛选项情况
         # 存在某个非默认的  不是综合 不是不限
@@ -84,14 +85,16 @@ def on_message_note(option):
     old = 0
     is_end = False # 是否采集完了  要把这个数据推送给客户端
     is_jump = False
+
     while check_end():
         # 获取笔记数据
         # notes = Selector(2).path("/FrameLayout/LinearLayout/ViewPager/RecyclerView/FrameLayout/TextView").parent(1).find_all()
+        print(1111111)
         notes = Selector(3).type("FrameLayout").clickable(True).find_all()
         if notes is None:
             notes = []
+        print(notes)
         for idx, note in enumerate(notes, start=1):  # start=1 表示从 1 开始计数
-
             if not check_end():
                 break
 
@@ -106,32 +109,12 @@ def on_message_note(option):
             if idx > 1:
                 re_time = 0.2
             # 获取笔记标题
-            # note_title = run_sel_s(lambda :note.find(Selector(3).type('TextView').drawingOrder(13)).text, re_time)
             note_title = run_sel_s(lambda :note.find(Selector(3).path("/RelativeLayout/TextView")).text, re_time)
             if note_title is None:
                 continue
 
-            t2 = time.time()
-            print(f"耗时：{t2-t1}")
-            # 用户昵称
-            author_name = run_sel_s(lambda :note.find(Selector(2).type('TextView').drawingOrder(1)).text, re_time)
-            if note_title is None:
-                continue
-            # 发布时间
-            push_time = run_sel_s(lambda :note.find(Selector(2).type('TextView').drawingOrder(2)).text, re_time)
-            if push_time is None or author_name is None:
-                continue
-            push_time = parse_chinese_time(push_time)
-            # 点赞数
-            like_num = run_sel_s(lambda :note.find(Selector(2).type('TextView').drawingOrder(3)).text, re_time)
-            if like_num:
-                like_num = like_num.replace('赞', '0')
 
-            # print(f"{author_name}=={push_time}=={like_num}=={note_title}")
-            # if like_num is None:
-            #     exit()
-
-            data_key = hashlib.md5(f"{note_title}{author_name}".encode('utf-8')).hexdigest()
+            data_key = hashlib.md5(f"{note_title}".encode('utf-8')).hexdigest()
             # print(data_key)
             # true 已经抓过了 不再抓取
             if data_key in data_keys:
@@ -141,21 +124,14 @@ def on_message_note(option):
                 '来源': keyword,
                 '标题': note_title,
                 '封面图': '',
-                '用户名称': author_name,
+                # '用户名称': author_name,
                 '用户主页链接': '',
                 '用户ID': '',
-                '发布时间': push_time,
-                '点赞数': like_num,
+                # '发布时间': push_time,
+                # '点赞数': like_num,
             }
 
             data_keys.append(data_key)
-
-            # """
-            # 每50 取一个
-            # """
-            # print(len(data_keys))
-            # if (len(data_keys)-1) % 10 != 0:
-            #     continue
 
             # 点击笔记
             note.find(Selector().click())
@@ -208,7 +184,6 @@ def on_message_note(option):
                 gr_total = (page-1)*page_size + len(gather_note)
 
                 out_success(f'{gr_total}. {note_title}')
-                # out_success(f'{gr_total}. {json.dumps(note_info, ensure_ascii=False)}')
 
                 # 判断是否足够一页数据了
                 if len(gather_note) >= page_size:
@@ -243,7 +218,6 @@ def on_message_note(option):
                     action.Key.back()
                     time.sleep(0.5)
 
-
             t7 = time.time()
             print(f"f耗时：{t7 - t4}")
             if is_jump:
@@ -268,9 +242,7 @@ def on_message_note(option):
             y1=int(height * 0.2),  # 到屏幕上方
             dur=500  # 持续时间 ms
         )
-
         time.sleep(0.5)
-        # exit()
 
         if g_num >= 6:
             print(f'结束--{g_num}')

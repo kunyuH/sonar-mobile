@@ -272,6 +272,7 @@ def get_shop_info(note_info=None):
 def check_search(sort_type,filter_note_type,filter_note_time,filter_note_range):
     # 点击下拉筛选
     Selector(2).type("ActionBar\$Tab").click().find()
+    time.sleep(0.5)
     parent_index = 3
     if (Selector(2).type("TextView").text("最新")
              .parent(1)

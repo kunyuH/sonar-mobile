@@ -2,22 +2,50 @@ import hashlib
 import json
 import random
 import re
+import ssl
 import sys
 import threading
 import time
 import uuid
 from datetime import datetime, timedelta
+
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from ..core.facade import f_gct
 
 
+def create_http_session(retries=3, backoff_factor=0.5, verify=True):
+    """
+    创建带重试机制的 requests Session。
+
+    在 Android (Chaquopy) 环境下，SSL 握手可能因 TLS 版本或 CA 证书问题失败，
+    可通过 retries 处理临时网络波动，通过 verify=False 跳过证书验证做兼容。
+    """
+    session = requests.Session()
+    session.verify = verify
+
+    retry = Retry(
+        total=retries,
+        read=retries,
+        connect=retries,
+        backoff_factor=backoff_factor,
+        allowed_methods=["HEAD", "GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+
+    return session
+
+
 def system_exit():
-    try:
-        from ..service.admin_client_service import AdminClientService
-        AdminClientService().http_post(api='/open/key/kick-device', timeout=10)
-    except Exception as e:
-        print(f'kick_device 失败: {e}')
+    # try:
+    #     from ..service.admin_client_service import AdminClientService
+    #     AdminClientService().http_post(api='/open/key/kick-device', timeout=10)
+    # except Exception as e:
+    #     print(f'kick_device 失败: {e}')
     if sys.platform == "android":
         from ascript.android import system
         system.exit()
@@ -102,33 +130,41 @@ def check_end():
         return False
     return f_gct().get(is_end_key)
 
+def worker_id():
+    # return f"send_phone:{get_device_uuid()}"
+    return f"send_phone:{f_gct().get('device_name')}"
+
 def out_info(msg):
-    from ..service.admin_client_service import AdminClientService
-    AdminClientService().http_post(api='/open/comm/res-mobile-data',data={
+    from ..service.admin_client_service_v2 import AdminClientServiceV2
+    AdminClientServiceV2().http_post(api='/open/tasks/log',json={
+        "task_id": f_gct().get('task_id'),
         "type": "log_info",
         "msg": msg,
-        "comm_event": f"send_phone:{get_device_uuid()}",
+        "worker_id": worker_id(),
     })
 def out_error(msg):
-    from ..service.admin_client_service import AdminClientService
-    AdminClientService().http_post(api='/open/comm/res-mobile-data', data={
+    from ..service.admin_client_service_v2 import AdminClientServiceV2
+    AdminClientServiceV2().http_post(api='/open/tasks/log', json={
+        "task_id": f_gct().get('task_id'),
         "type": "log_error",
         "msg": msg,
-        "comm_event": f"send_phone:{get_device_uuid()}",
+        "worker_id": worker_id(),
     })
 def out_success(msg):
-    from ..service.admin_client_service import AdminClientService
-    AdminClientService().http_post(api='/open/comm/res-mobile-data', data={
+    from ..service.admin_client_service_v2 import AdminClientServiceV2
+    AdminClientServiceV2().http_post(api='/open/tasks/log', json={
+        "task_id": f_gct().get('task_id'),
         "type": "log_success",
         "msg": msg,
-        "comm_event": f"send_phone:{get_device_uuid()}",
+        "worker_id": worker_id(),
     })
 def out_warning(msg):
-    from ..service.admin_client_service import AdminClientService
-    AdminClientService().http_post(api='/open/comm/res-mobile-data', data={
+    from ..service.admin_client_service_v2 import AdminClientServiceV2
+    AdminClientServiceV2().http_post(api='/open/tasks/log', json={
+        "task_id": f_gct().get('task_id'),
         "type": "log_warning",
         "msg": msg,
-        "comm_event": f"send_phone:{get_device_uuid()}",
+        "worker_id": worker_id(),
     })
 
 def send(data):
@@ -138,11 +174,14 @@ def send(data):
     - Socket: ws.sendall() + \n
     """
     msg = json.dumps(data)
-    from ..service.admin_client_service import AdminClientService
-    AdminClientService().http_post(api='/open/comm/res-mobile-data', data={
-        "type": "done",
-        "msg": msg,
-        "comm_event": f"send_phone:{get_device_uuid()}",
+    from ..service.admin_client_service_v2 import AdminClientServiceV2
+    AdminClientServiceV2().http_post(api='/open/tasks/batch-complete', json={
+        "tasks": [
+            {
+                "id": 4,
+                "status": "completed",
+            }
+        ]
     })
     # try:
     #     # 尝试使用 sendall (socket)

@@ -4,10 +4,8 @@ import random
 import sys
 import time
 
-import requests
-
 from ..core.facade import f_t_cache, f_gct
-from ..utils.tools import generate_guid, is_json, get_device_uuid
+from ..utils.tools import create_http_session, generate_guid, is_json, get_device_uuid
 from ...config.config import APP_VERSION, NETWORK_DRIVE_HOST, NETWORK_DRIVE_SECRET_KEY, IS_DEBUG
 from .encrypt import Encrypt
 from ..exceptions.AdminClientService415 import AdminClientService415
@@ -16,7 +14,7 @@ from ..exceptions.hoo_execption import HooException
 
 class AdminClientService:
     def __init__(self, **kwargs):
-        pass
+        self.session = create_http_session(verify=False)
 
     def rep(self, data=None):
         if data is None:
@@ -87,7 +85,7 @@ class AdminClientService:
 
         ciphertext = self.rep(data)
         def get(api, ciphertext=None, timeout=None):
-            res = requests.post(
+            res = self.session.post(
                 url=f'{NETWORK_DRIVE_HOST}{api}',
                 data={
                     'ciphertext': ciphertext,
@@ -107,7 +105,7 @@ class AdminClientService:
 
         ciphertext = self.rep(json)
         def get(api, ciphertext=None, timeout=None):
-            res = requests.get(
+            res = self.session.get(
                 url=f'{NETWORK_DRIVE_HOST}{api}',
                 json={
                     'ciphertext': ciphertext,
