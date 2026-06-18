@@ -15,11 +15,34 @@ from ascript.android.system import Device
 from ....src.core.facade import f_gct
 from .common import check_search, get_note_info, is_note_detail_page
 
-from ....src.utils.tools import (parse_chinese_time,check_end,out_info,
-                                 run_sel,out_success,off,send, t_sleep, run_sel_s)
+from ....src.utils.tools import (check_end,out_info,task_done,
+                                 run_sel,out_success,off,t_sleep, run_sel_s)
 
-def on_message_note(option):
+def on_message_note(sort_type,task):
     # print(option)
+
+    option = {
+        "max_num": task.get('scheme', {}).get('limit', 0),
+        "frequency": 0.5,
+        "keyword": task.get('keyword', {}),
+        "is_shop": False,
+        "page": 1,
+        "page_size": 10,
+        "search_id": '',
+        "sort": "general",
+        "note_type": 0,
+        "ext_flags": [],
+        "image_formats": ["jpg", "webp", "avif"],
+        "filters": [
+            {"tags": [sort_type], "type": "sort_type"},  # 排序依据
+            {"tags": [task.get('scheme', {}).get('note_type', '不限')],
+             "type": "filter_note_type"},  # 笔记类型
+            {"tags": [task.get('scheme', {}).get('publish_time', '不限')],
+             "type": "filter_note_time"},  # 发布时间
+            {"tags": [task.get('scheme', {}).get('search_scope', '不限')],
+             "type": "filter_note_range"},  # 搜索范围
+            {"tags": ["不限"], "type": "filter_pos_distance"},  # 位置距离 不做更改 需要用户授权获取当前位置信息
+        ]}
     """
     json_ = {
             "keyword": keyword,
@@ -63,7 +86,7 @@ def on_message_note(option):
         out_info(f"正在搜索关键词： {keyword}")
 
         # 等待搜索结果加载完成
-        run_sel(lambda :Selector(2).type('ActionBar\$Tab').find(),4,0.1)
+        run_sel(lambda :Selector(2).type('ActionBar\$Tab').find(),10,0.1)
 
         # 需添加筛选项情况
         # 存在某个非默认的  不是综合 不是不限
@@ -71,20 +94,20 @@ def on_message_note(option):
             check_search(sort_type, filter_note_type, filter_note_time, filter_note_range)
             time.sleep(2)
 
+
+        if max_num <= 20:
+            # 不用往下翻了
+            return
+
         # 存放全部采集到的笔记唯一标识  用于确认搜索页面上的笔记是否采集过了 标题加昵称来确认
         f_gct().set('data_keys', [])
-        # 存放全部采集到的笔记数据  用于确认页面上的笔记是否采集过了
-        f_gct().set('all_note', [])
 
     # 存放本次采集到的笔记数据
     gather_note = []
     data_keys = f_gct().get('data_keys')
-    all_note = f_gct().get('all_note')
 
     g_num = 0
     old = 0
-    is_end = False # 是否采集完了  要把这个数据推送给客户端
-    is_jump = False
 
     while check_end():
         # 获取笔记数据
@@ -132,97 +155,54 @@ def on_message_note(option):
             }
 
             data_keys.append(data_key)
-
-            # 点击笔记
-            note.find(Selector().click())
-            time.sleep(0.5)
-            # 获取笔记详情  两种情况 1.笔记  2.视频
-            # 获取笔记
-            t1 = time.time()
-            note_info = get_note_info(note_info,is_shop)
-            print('======note_info=====')
-            # print(note_info)
-
-            note_id = note_info.get('笔记ID')
             t2 = time.time()
-            print(f"a耗时：{t2 - t1}")
-
-            if note_id is not None and note_id not in all_note:
-                all_note.append(note_id)
-                gather_note.append({
-                    '来源': note_info.get('来源'),
-                    '标题': note_info.get('标题'),
-                    # '内容': note_info.get('内容'),
-                    # '用户名称': note_info.get('用户名称'),
-                    # '发布时间': note_info.get('发布时间'),
-                    # '点赞数': note_info.get('点赞数'),
-                    # '收藏数': note_info.get('收藏数'),
-                    # '评论数': note_info.get('评论数'),
-                    # '分享数': note_info.get('分享数'),
-                    # '类型': note_info.get('类型'),
-
-                    # '笔记ID': note_info.get('笔记ID'),
-                    # '笔记链接': note_info.get('笔记链接'),
-                    # '笔记分享链接': note_info.get('笔记分享链接'),
-                    #
-                    # '用户小红书号': note_info.get('用户小红书号'),
-                    # '用户IP属地': note_info.get('用户IP属地'),
-                    # '用户简介': note_info.get('用户简介'),
-                    # '用户性别': note_info.get('用户性别'),
-                    # '用户关注': note_info.get('用户关注'),
-                    # '用户粉丝': note_info.get('用户粉丝'),
-                    # '用户获赞与收藏': note_info.get('用户获赞与收藏'),
-                    # '是否有店铺': note_info.get('是否有店铺'),
-                    # '店铺名称': note_info.get('店铺名称'),
-                    # '店铺星级': note_info.get('店铺星级'),
-                    # '店铺已售': note_info.get('店铺已售'),
-                    # '店铺粉丝': note_info.get('店铺粉丝'),
-                })
-                # 采集了多少条
-                gr_total = (page-1)*page_size + len(gather_note)
-
-                out_success(f'{gr_total}. {note_title}')
-
-                # 判断是否足够一页数据了
-                if len(gather_note) >= page_size:
-                    out_info(f'第{page}页采集完， 采集到 {len(gather_note)} 条笔记')
-                    is_jump = True
-                # 已经取够数量的笔记了
-                if gr_total >= max_num:
-                    out_info(f'已经采集到 {gr_total} 条笔记， 【{keyword}】采集完成')
-                    is_jump = True
-                    is_end = True
-            t3 = time.time()
-            print(f"b耗时：{t3 - t2}")
+            # # 点击笔记
+            # note.find(Selector().click())
+            # time.sleep(0.5)
+            # # 获取笔记详情  两种情况 1.笔记  2.视频
+            # # 获取笔记
+            # # note_info = get_note_info(note_info,is_shop)
+            # print('======note_info=====')
             # 返回
-            print('===========返回关键词搜索列表页=====')
-            time.sleep(0.2)
-            if note_info.get('类型') == 'video':
-                Selector(2).desc("返回").type("ImageView").click().find()
-            else:
-                action.Key.back()
-            time.sleep(0.2)
-            t4 = time.time()
-            print(f"c耗时：{t4 - t3}")
-            if is_note_detail_page():
-                t5 = time.time()
-                print(f"d耗时：{t5 - t4}")
-                action.Key.back()
-                time.sleep(0.5)
-                if is_note_detail_page():
-                    t6 = time.time()
-                    print(f"e耗时：{t6 - t5}")
-                    action.Key.back()
-                    time.sleep(0.5)
+            # print('===========返回关键词搜索列表页=====')
+            # time.sleep(0.2)
+            # if note_info.get('类型') == 'video':
+            #     Selector(2).desc("返回").type("ImageView").click().find()
+            # else:
+            #     action.Key.back()
+            # time.sleep(0.2)
+            # if is_note_detail_page():
+            #     action.Key.back()
+            #     time.sleep(0.5)
+            #     if is_note_detail_page():
+            #         action.Key.back()
+            #         time.sleep(0.5)
 
-            t7 = time.time()
-            print(f"f耗时：{t7 - t4}")
-            if is_jump:
+
+            gather_note.append({
+                '来源': note_info.get('来源'),
+                '标题': note_info.get('标题'),
+            })
+            # # 采集了多少条
+            # gr_total = (page-1)*page_size + len(gather_note)
+            #
+            # out_success(f'{gr_total}. {note_title}')
+
+
+            print(f"进度：{len(gather_note)}/{page_size}")
+
+            # 判断是否足够一页数据了
+            if len(gather_note) >= max_num:
+                out_info(f'第{page}页采集完， 采集到 {len(gather_note)} 条笔记')
+                # 需要返回一下
+                action.Key.back()
                 off()
                 break
 
+            t3 = time.time()
+            print(f"b耗时：{t3 - t2}")
+
         f_gct().set('data_keys', data_keys)
-        f_gct().set('all_note', all_note)
         # 往下滑动
         print('======滑动======')
         # 滑动
@@ -251,10 +231,6 @@ def on_message_note(option):
 
         old = len(gather_note)
 
-    send({
-        'data': gather_note,
-        'is_end': is_end
-    })
     print('func_phone_xhs_note_data')
     pass
 

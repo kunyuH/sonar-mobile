@@ -3,6 +3,7 @@ import time
 import traceback
 import json
 import threading
+import random
 
 from ascript.android import system
 from ascript.android.system import R
@@ -14,7 +15,7 @@ from ..service.xhs.comment import on_message_content
 from ..service.xhs.note import on_message_note
 from ...src.service.auth_service import Auth
 from ...src.core.facade import f_gct
-from ...src.utils.tools import system_exit, check_end, get_device_uuid, on, worker_id
+from ...src.utils.tools import system_exit, check_end, t_sleep, on, app_no,task_done
 
 # ######################## 心跳 end ###################################
 
@@ -50,36 +51,30 @@ def tunnel(k, v=None):
                                                                  "limit": 1,
                                                                  "platform": "xhs",
                                                                  "endpoint": "android",
-                                                                 "worker_id": worker_id()
+                                                                 "app_no": app_no()
                                                              })
                     if not res_data:
                         time.sleep(1)
                         continue
-                    for task in res_data:
+                    tasks = res_data['tasks']
+                    system_config = res_data['system_config']
+                    min_seconds = system_config['collection_interval']['min_seconds']
+                    max_seconds = system_config['collection_interval']['max_seconds']
+                    for task in tasks:
                         print(task)
                         task_id = task.get('id', '')
                         # 提取任务id 并放入 便于后续内部使用
                         f_gct().set('task_id', task_id)
 
                         if task.get('func') == 'xhs_gather_note':
-                            on_message_note({
-                                "max_num": task.get('scheme',{}).get('max_num',0),
-                                "keyword": task.get('keyword',{}),
-                                        "is_shop": False,
-                                        "page": 1,
-                                        "page_size": 10,
-                                        "search_id": '',
-                                        "sort": "general",
-                                        "note_type": 0,
-                                        "ext_flags": [],
-                                        "image_formats": ["jpg", "webp", "avif"],
-                                        "filters": [
-                                            {"tags": ['general'], "type": "sort_type"},# 排序依据
-                                            {"tags": ['不限'], "type": "filter_note_type"},           # 笔记类型
-                                            {"tags": ['不限'], "type": "filter_note_time"},           # 发布时间
-                                            {"tags": ['不限'], "type": "filter_note_range"},          # 搜索范围
-                                            {"tags": ["不限"], "type": "filter_pos_distance"},        # 位置距离 不做更改 需要用户授权获取当前位置信息
-                                        ]})
+                            for sort_type in task.get('scheme', {}).get('sort_by', ['general']):
+                                on_message_note(sort_type,task)
+                            task_done()
+                            # 暂停一下
+                            seconds = random.randint(min_seconds, max_seconds)
+                            print(f'暂停一下 {seconds} 秒')
+                            t_sleep(seconds)
+
                         elif task.get('func') == 'xhs_gather_comment':
                             on_message_content(task.get('option'))
                             pass

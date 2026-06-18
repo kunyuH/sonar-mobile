@@ -130,9 +130,9 @@ def check_end():
         return False
     return f_gct().get(is_end_key)
 
-def worker_id():
+def app_no():
     # return f"send_phone:{get_device_uuid()}"
-    return f"send_phone:{f_gct().get('device_name')}"
+    return f_gct().get('device_name')
 
 def out_info(msg):
     from ..service.admin_client_service_v2 import AdminClientServiceV2
@@ -140,7 +140,7 @@ def out_info(msg):
         "task_id": f_gct().get('task_id'),
         "type": "log_info",
         "msg": msg,
-        "worker_id": worker_id(),
+        "app_no": app_no(),
     })
 def out_error(msg):
     from ..service.admin_client_service_v2 import AdminClientServiceV2
@@ -148,7 +148,7 @@ def out_error(msg):
         "task_id": f_gct().get('task_id'),
         "type": "log_error",
         "msg": msg,
-        "worker_id": worker_id(),
+        "app_no": app_no(),
     })
 def out_success(msg):
     from ..service.admin_client_service_v2 import AdminClientServiceV2
@@ -156,7 +156,7 @@ def out_success(msg):
         "task_id": f_gct().get('task_id'),
         "type": "log_success",
         "msg": msg,
-        "worker_id": worker_id(),
+        "app_no": app_no(),
     })
 def out_warning(msg):
     from ..service.admin_client_service_v2 import AdminClientServiceV2
@@ -164,7 +164,17 @@ def out_warning(msg):
         "task_id": f_gct().get('task_id'),
         "type": "log_warning",
         "msg": msg,
-        "worker_id": worker_id(),
+        "app_no": app_no(),
+    })
+def task_done():
+    from ..service.admin_client_service_v2 import AdminClientServiceV2
+    AdminClientServiceV2().http_post(api='/open/tasks/batch-complete', json={
+        "tasks": [
+            {
+                "id": f_gct().get('task_id'),
+                "status": "completed",
+            }
+        ]
     })
 
 def send(data):

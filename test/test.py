@@ -18,18 +18,18 @@ from ..app_android.service.xhs.note import on_message_note
 def test_run():
     on()
     task = {
-            "id": 16,
+            "id": 31,
             "scheme_id": 8,
             "status": "processing",
-            "error": 'null',
-            "started_at": "2026-05-25T10:20:05.000000Z",
-            "completed_at": 'null',
-            "created_at": "2026-05-25T10:19:59.000000Z",
-            "updated_at": "2026-05-25T10:20:05.000000Z",
-            "deleted_at": 'null',
+            "error": null,
+            "started_at": "2026-05-26T02:15:02.000000Z",
+            "completed_at": null,
+            "created_at": "2026-05-25T10:27:42.000000Z",
+            "updated_at": "2026-05-26T02:15:02.000000Z",
+            "deleted_at": null,
             "platform": "xhs",
             "endpoint": "android",
-            "keyword": '美食',
+            "keyword": "美食",
             "func": "xhs_gather_note",
             "scheme": {
                 "id": 8,
@@ -37,13 +37,15 @@ def test_run():
                 "name": "gggggg",
                 "alert_negative_threshold": 0,
                 "region": [],
-                "keywords": [],
-                "limit": 100,
+                "keywords": [
+                    "美食"
+                ],
+                "limit": 20,
                 "exclude": [],
-                "check_no_region": 'true',
+                "check_no_region": true,
                 "created_at": "2026-04-30T08:51:33.000000Z",
-                "updated_at": "2026-05-07T09:53:34.000000Z",
-                "deleted_at": 'null',
+                "updated_at": "2026-05-26T02:14:51.000000Z",
+                "deleted_at": null,
                 "platforms": [
                     "xhs"
                 ],
@@ -53,27 +55,37 @@ def test_run():
                         "ios",
                         "android"
                     ]
-                }
+                },
+                "sort_by": [
+                    "general",
+                    "comment_descending",
+                    "collect_descending"
+                ],
+                "note_type": "图文",
+                "publish_time": "一天内",
+                "search_scope": "未看过"
             }
         }
     task_id = task.get('id', '')
     f_gct().set('task_id', task_id)
-    on_message_note({
-        "max_num": task.get('scheme', {}).get('limit', 0),
-        "frequency": 0.5,
-        "keyword": task.get('keyword', {}),
-        "is_shop": False,
-        "page": 1,
-        "page_size": 10,
-        "search_id": '',
-        "sort": "general",
-        "note_type": 0,
-        "ext_flags": [],
-        "image_formats": ["jpg", "webp", "avif"],
-        "filters": [
-            {"tags": ['time_descending'], "type": "sort_type"},  # 排序依据
-            {"tags": ['不限'], "type": "filter_note_type"},  # 笔记类型
-            {"tags": ['不限'], "type": "filter_note_time"},  # 发布时间
-            {"tags": ['不限'], "type": "filter_note_range"},  # 搜索范围
-            {"tags": ["不限"], "type": "filter_pos_distance"},  # 位置距离 不做更改 需要用户授权获取当前位置信息
-        ]})
+
+    for sort_type in task.get('scheme', {}).get('sort_by', ['general']):
+        on_message_note({
+            "max_num": task.get('scheme', {}).get('limit', 0),
+            "frequency": 0.5,
+            "keyword": task.get('keyword', {}),
+            "is_shop": False,
+            "page": 1,
+            "page_size": 10,
+            "search_id": '',
+            "sort": "general",
+            "note_type": 0,
+            "ext_flags": [],
+            "image_formats": ["jpg", "webp", "avif"],
+            "filters": [
+                {"tags": [sort_type], "type": "sort_type"},  # 排序依据
+                {"tags": [task.get('scheme', {}).get('note_type', '不限')], "type": "filter_note_type"},  # 笔记类型
+                {"tags": [task.get('scheme', {}).get('publish_time', '不限')], "type": "filter_note_time"},  # 发布时间
+                {"tags": [task.get('scheme', {}).get('search_scope', '不限')], "type": "filter_note_range"},  # 搜索范围
+                {"tags": ["不限"], "type": "filter_pos_distance"},  # 位置距离 不做更改 需要用户授权获取当前位置信息
+            ]})

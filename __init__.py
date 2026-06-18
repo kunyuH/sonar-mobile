@@ -3,9 +3,9 @@ from .src.core.global_context import GCT
 
 GCT().set('debug',False)
 
-from .test.test import test_run
-test_run()
-exit()
+# from .test.test import test_run
+# test_run()
+# exit()
 
 
 # 重置 GCT 单例（解决重启后缓存未释放问题）
