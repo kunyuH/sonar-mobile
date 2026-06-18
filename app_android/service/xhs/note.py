@@ -119,7 +119,7 @@ def on_message_note(sort_type,task):
         print(notes)
         for idx, note in enumerate(notes, start=1):  # start=1 表示从 1 开始计数
             if not check_end():
-                break
+                return
 
             # 暂停
             t_sleep(frequency)
@@ -196,8 +196,7 @@ def on_message_note(sort_type,task):
                 out_info(f'第{page}页采集完， 采集到 {len(gather_note)} 条笔记')
                 # 需要返回一下
                 action.Key.back()
-                off()
-                break
+                return
 
             t3 = time.time()
             print(f"b耗时：{t3 - t2}")
@@ -223,16 +222,13 @@ def on_message_note(sort_type,task):
 
         if g_num >= 6:
             print(f'结束--{g_num}')
-            break
+            return
         if len(gather_note) > old:
             g_num = 0
         else:
             g_num += 1
 
         old = len(gather_note)
-
-    print('func_phone_xhs_note_data')
-    pass
 
 
 
