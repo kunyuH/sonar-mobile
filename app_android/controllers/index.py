@@ -4,6 +4,7 @@ import traceback
 import json
 import threading
 import random
+import requests
 
 from ascript.android import system
 from ascript.android.system import R
@@ -15,7 +16,11 @@ from ..service.xhs.comment import on_message_content
 from ..service.xhs.note import on_message_note
 from ...src.service.auth_service import Auth
 from ...src.core.facade import f_gct
-from ...src.utils.tools import system_exit, check_end, t_sleep, on, app_no,task_done
+from ...src.utils.tools import system_exit, check_end, t_sleep, on, app_no, task_done
+
+# 网络重试配置
+NETWORK_RETRY_MAX_BACKOFF = 300  # 最长等待间隔（秒）
+NETWORK_RETRY_INITIAL = 1        # 初始等待间隔（秒）
 
 # ######################## 心跳 end ###################################
 
@@ -44,8 +49,15 @@ def tunnel(k, v=None):
         elif k == "cloud_start":
             on()
             w.close()
-            try:
-                while check_end():
+
+            # 网络重试状态
+            net_backoff = NETWORK_RETRY_INITIAL
+            network_errors = (requests.exceptions.ConnectionError,
+                              requests.exceptions.Timeout,
+                              ConnectionError)
+
+            while check_end():
+                try:
                     res_data = AdminClientServiceV2().http_get(api='/open/tasks/pop',
                                                              json={
                                                                  "limit": 1,
@@ -53,39 +65,46 @@ def tunnel(k, v=None):
                                                                  "endpoint": "android",
                                                                  "app_no": app_no()
                                                              })
-                    if not res_data:
-                        time.sleep(1)
-                        continue
-                    tasks = res_data['tasks']
-                    system_config = res_data['system_config']
-                    min_seconds = system_config['collection_interval']['min_seconds']
-                    max_seconds = system_config['collection_interval']['max_seconds']
-                    for task in tasks:
-                        print(task)
-                        task_id = task.get('id', '')
-                        # 提取任务id 并放入 便于后续内部使用
-                        f_gct().set('task_id', task_id)
+                except network_errors as e:
+                    print(f'网络连接失败，{net_backoff}秒后重试: {e}')
+                    t_sleep(min(net_backoff, NETWORK_RETRY_MAX_BACKOFF))
+                    net_backoff = min(net_backoff * 2, NETWORK_RETRY_MAX_BACKOFF)
+                    continue
 
-                        if task.get('func') == 'xhs_gather_note':
-                            for sort_type in task.get('scheme', {}).get('sort_by', ['general']):
-                                on_message_note(sort_type,task)
-                            task_done()
-                            # 暂停一下
-                            seconds = random.randint(min_seconds, max_seconds)
-                            print(f'暂停一下 {seconds} 秒')
-                            t_sleep(seconds)
+                # 请求成功 → 重置退避
+                net_backoff = NETWORK_RETRY_INITIAL
 
-                        elif task.get('func') == 'xhs_gather_comment':
-                            on_message_content(task.get('option'))
-                            pass
-
+                if not res_data:
                     time.sleep(1)
-            except Exception as e:
-                print('云控执行错误:', e)
-                traceback.print_exc()
-                from ascript.android.ui import Dialog
-                Dialog.toast("全自动云控执行失败！{}".format(str(e)))
-                system_exit()
+                    continue
+
+                tasks = res_data['tasks']
+                system_config = res_data['system_config']
+                min_seconds = system_config['collection_interval']['min_seconds']
+                max_seconds = system_config['collection_interval']['max_seconds']
+                for task in tasks:
+                    print(task)
+                    task_id = task.get('id', '')
+                    # 提取任务id 并放入 便于后续内部使用
+                    f_gct().set('task_id', task_id)
+
+                    if task.get('func') == 'xhs_gather_note':
+                        for sort_type in task.get('scheme', {}).get('sort_by', ['general']):
+                            on_message_note(sort_type, task)
+
+                        # 暂停一会 让平台接收数据
+                        t_sleep(5)
+                        task_done()
+                        # 暂停一下
+                        seconds = random.randint(min_seconds, max_seconds)
+                        print(f'暂停一下 {seconds} 秒')
+                        t_sleep(seconds)
+
+                    elif task.get('func') == 'xhs_gather_comment':
+                        on_message_content(task.get('option'))
+                        pass
+
+                time.sleep(1)
 
         elif k == "close":
             system_exit()
